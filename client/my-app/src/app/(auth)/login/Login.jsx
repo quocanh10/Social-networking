@@ -49,10 +49,13 @@ export default function Login() {
     };
 
     try {
-      setIsLoading(true);
+      // setIsLoading(true);
+      console.log("chuẩn bị gửi req");
+      console.log("userData", userData);
       const response = await client.post("/auth/login", userData);
-      // console.log(response);
+      console.log("54", response);
       if (response.data.status !== 200 && response.data.status !== 202) {
+        console.log("đã nhảy vào đây", response.data);
         showToast("error", response.data.message);
         return;
       } else if (response.data.status === 202) {
@@ -60,16 +63,13 @@ export default function Login() {
         showToast("info", response.data.message);
         return;
       }
-      // Cookies.set("access_token", response.data.data.accessToken);
-      // Cookies.set("refresh_token", response.data.data.refreshToken);
+      console.log("đã đến được 64"); // ✅ Bây giờ sẽ chạy
       await setToken(
         response.data.data.accessToken,
         response.data.data.refreshToken
       );
-      showToast("success", response.data.message, () => {
-        setIsLoading(true);
-        router.push("/");
-      });
+
+      router.push("/");
     } catch (e) {
       console.log(e);
       showToast("error", "Đã có lỗi xảy ra");
@@ -108,12 +108,34 @@ export default function Login() {
         showToast("error", response.data.message);
         return;
       }
-      // Cookies.set("access_token", response.data.data.accessToken);
-      // Cookies.set("refresh_token", response.data.data.refreshToken);
-      showToast("success", response.data.message, () => {
-        setIsLoading(true);
+
+      showToast("success", response.data.message);
+
+      setToggle(false);
+
+      // Gọi API login lại để lấy tokens
+      const loginData = {
+        email: emailInput,
+        password: document.querySelector('input[name="password"]').value, // Lấy password từ form
+      };
+
+      const loginResponse = await client.post("/auth/login", loginData);
+      console.log("Login after OTP verify:", loginResponse);
+
+      if (loginResponse.data.status === 200) {
+        console.log("đã đến được 64"); // ✅ Bây giờ sẽ chạy
+
+        // Set tokens
+        await setToken(
+          loginResponse.data.data.accessToken,
+          loginResponse.data.data.refreshToken
+        );
+
+        // Redirect về trang chủ
         router.push("/");
-      });
+      } else {
+        showToast("error", "Đăng nhập thất bại sau khi verify OTP");
+      }
     } catch (e) {
       console.log(e);
       showToast("error", "Đã có lỗi xảy ra");

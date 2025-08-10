@@ -1,6 +1,30 @@
 import { Avatar } from "@heroui/react";
+import { useState, useEffect } from "react";
+import { client } from "@/app/helpers/fetch_api/client";
+import { getToken } from "@/app/actions/gettoken.action";
 
 export default function AvatarStory() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const { accessToken } = await getToken();
+        if (accessToken?.value) {
+          client.setToken(accessToken.value);
+          const Response = await client.get("/profile");
+          if (Response.data.message === "Success") {
+            setUser(Response.data.data.user);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
   return (
     <div className="flex overflow-x-auto flex-row gap-6 p-2  w-full">
       <div className="pl-1"></div>
@@ -13,7 +37,7 @@ export default function AvatarStory() {
         <Avatar
           isBordered
           size="lg"
-          src="https://i.pravatar.cc/150?u=a042581f4e29026024d"
+          src={user?.avatar_url}
           className="flex-shrink-0 cursor-pointer"
         />
         <p
@@ -24,7 +48,7 @@ export default function AvatarStory() {
           }}
           className="text-xs mt-2 w-full"
         >
-          quocanh1001
+          {user?.username}
         </p>
       </div>
 

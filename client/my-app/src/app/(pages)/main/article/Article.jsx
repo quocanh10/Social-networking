@@ -56,7 +56,7 @@ export default function Article() {
             <span className="text-sm"> anhquoc10.tvt@gmail.com</span>
           </p>
           <p className="mt-6 text-center text-sm text-gray-500">
-            © 2025 Instagram from Quoc Anh
+            © 2025 InstaReflection from Quoc Anh
           </p>
         </div>
       </footer>

@@ -22,7 +22,7 @@ router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
 router.post("/auth/check-email", authController.checkEmail);
 router.post("/auth/forgot-password", authController.forgotPassword);
-
+router.post("/auth/logout", authMiddleware, authController.logout);
 // Verify account
 router.post("/auth/verify", verifyController.verifyAccount);
 router.post("/auth/resend-otp", verifyController.resendOTP);
@@ -35,6 +35,7 @@ router.post("/auth/refresh", authController.refresh);
 // User
 router.get("/profile", authMiddleware, userController.profile);
 router.put("/profile", authMiddleware, userController.updateProfile);
+router.get("/users/search", authMiddleware, userController.searchUsers);
 
 // Cloudinary
 // router.use("/cloudinary", cloudinaryRoutes);

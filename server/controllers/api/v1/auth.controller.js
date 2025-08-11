@@ -1,4 +1,4 @@
-const { User, AccessUser } = require("../../../models/index");
+const { User, AccessUser, BlackList } = require("../../../models/index");
 const bcrypt = require("bcrypt");
 const {
   createAccessToken,
@@ -12,6 +12,7 @@ const { Op } = require("sequelize");
 const sendMail = require("../../../utils/mail");
 const otpGenerator = require("otp-generator");
 const generator = require("generate-password");
+const jwt = require("jsonwebtoken");
 
 module.exports = {
   register: async (req, res) => {
@@ -88,7 +89,8 @@ module.exports = {
         where: {
           user_id: user.id,
           device_name: userAgentInfo,
-          refresh_token: null,
+          // refresh_token: null,
+          status: false,
         },
       });
 
@@ -99,9 +101,7 @@ module.exports = {
         where: {
           user_id: user.id,
           device_name: userAgentInfo,
-          refresh_token: {
-            [Op.not]: null,
-          },
+          status: true,
         },
       });
       // console.log(accessUser);
@@ -182,10 +182,9 @@ module.exports = {
             device_name: userAgentInfo,
             otp: otp,
           });
+          return successResponse(res, 202, "Vui lòng xác minh tài khoản");
         }
       }
-
-      return successResponse(res, 202, "Vui lòng xác minh tài khoản");
     } catch (e) {
       console.log(e);
       return errorResponse(res, 500, "Đã có lỗi xảy ra");
@@ -310,6 +309,41 @@ module.exports = {
     } catch (e) {
       console.log(e);
       return errorResponse(res, 401, "Unauthorized");
+    }
+  },
+
+  logout: async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      const userId = req.user.userId;
+      const accessToken = req.headers.authorization?.replace("Bearer ", "");
+
+      if (refreshToken) {
+        await AccessUser.update(
+          {
+            refresh_token: null,
+          },
+          {
+            where: {
+              refresh_token: refreshToken,
+              user_id: userId,
+            },
+          }
+        );
+      }
+
+      if (accessToken) {
+        // Thêm access token vào blacklist
+        await BlackList.create({
+          token: accessToken,
+          expire: new Date(Date.now() + 15 * 60 * 1000), // 15 phút
+        });
+      }
+
+      return successResponse(res, 200, "Đăng xuất thành công");
+    } catch (error) {
+      console.error("Logout error:", error);
+      return errorResponse(res, 500, "Đã có lỗi xảy ra khi đăng xuất");
     }
   },
 };

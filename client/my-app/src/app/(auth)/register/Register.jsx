@@ -127,7 +127,7 @@ export default function Register() {
             </Link>
           </div>
           <p className="text-center text-gray-500 text-sm mt-10">
-            © 2025 Instagram from Quoc Anh
+            © 2025 InstaReflection from Quoc Anh
           </p>
         </div>
         <ToastContainer />

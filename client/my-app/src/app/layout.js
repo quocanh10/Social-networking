@@ -9,7 +9,7 @@ const roboto = Roboto({
 });
 
 export const metadata = {
-  title: "Instagram",
+  title: "InstaReflection",
   description: "Nơi bạn có thể chia sẻ mọi khoảnh khắc của mình với mọi người.",
 };
 

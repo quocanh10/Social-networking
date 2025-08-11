@@ -1,5 +1,6 @@
 const { successResponse } = require("../../../utils/response");
 const { User } = require("../../../models/index");
+const { Op } = require("sequelize");
 
 module.exports = {
   profile: async (req, res) => {
@@ -168,6 +169,80 @@ module.exports = {
     } catch (error) {
       console.error("Update profile error:", error);
       return errorResponse(res, 500, "Lỗi server", error.message);
+    }
+  },
+  searchUsers: async (req, res) => {
+    try {
+      const { q, limit = 10, offset = 0 } = req.query;
+      const userId = req.user.userId; // User hiện tại
+
+      if (!q || q.trim().length === 0) {
+        return successResponse(res, 200, "Kết quả tìm kiếm", {
+          users: [],
+          total: 0,
+        });
+      }
+
+      const searchTerm = `%${q.trim()}%`;
+
+      // Tìm kiếm theo username, fullname hoặc email
+      const users = await User.findAndCountAll({
+        where: {
+          [Op.and]: [
+            {
+              id: {
+                [Op.ne]: userId, // Không hiển thị chính mình
+              },
+            },
+            {
+              is_blocked: false,
+              is_private: false, // Chỉ hiển thị tài khoản public
+            },
+            {
+              [Op.or]: [
+                {
+                  username: {
+                    [Op.iLike]: searchTerm,
+                  },
+                },
+                {
+                  fullname: {
+                    [Op.iLike]: searchTerm,
+                  },
+                },
+                {
+                  email: {
+                    [Op.iLike]: searchTerm,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        attributes: [
+          "id",
+          "username",
+          "fullname",
+          "avatar_url",
+          "tick_blue",
+          "intro",
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [
+          ["tick_blue", "DESC"],
+          ["username", "ASC"],
+        ],
+      });
+
+      return successResponse(res, 200, "Tìm kiếm thành công", {
+        users: users.rows,
+        total: users.count,
+        hasMore: parseInt(offset) + parseInt(limit) < users.count,
+      });
+    } catch (error) {
+      console.error("Search users error:", error);
+      return errorResponse(res, 500, "Đã có lỗi xảy ra");
     }
   },
 };

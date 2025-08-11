@@ -3,7 +3,7 @@ import notFoundImage from "@/app/assets/images/404notfound.jpg";
 import Image from "next/image";
 
 export const metadata = {
-  title: "Not Found - Instagram",
+  title: "Not Found - InstaReflection",
   description: "Lạc đường mất rùi",
 };
 

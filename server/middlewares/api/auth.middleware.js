@@ -1,6 +1,7 @@
 const { errorResponse } = require("../../utils/response");
 const { User, BlackList } = require("../../models/index");
 const { decodeToken } = require("../../utils/jwt");
+const { Op } = require("sequelize");
 
 module.exports = async (req, res, next) => {
   try {
@@ -30,6 +31,9 @@ module.exports = async (req, res, next) => {
         const blacklist = await BlackList.findOne({
           where: {
             token: accessToken,
+            expire: {
+              [Op.gt]: new Date(), // Kiểm tra token chưa hết hạn blacklist
+            },
           },
         });
         if (blacklist) {

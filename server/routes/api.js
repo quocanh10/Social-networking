@@ -36,6 +36,11 @@ router.post("/auth/refresh", authController.refresh);
 router.get("/profile", authMiddleware, userController.profile);
 router.put("/profile", authMiddleware, userController.updateProfile);
 router.get("/users/search", authMiddleware, userController.searchUsers);
+router.get(
+  "/profile/:username",
+  authMiddleware,
+  userController.getProfileByUsername
+);
 
 // Cloudinary
 // router.use("/cloudinary", cloudinaryRoutes);

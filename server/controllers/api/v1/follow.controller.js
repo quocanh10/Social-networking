@@ -103,7 +103,12 @@ const getFollowing = async (req, res) => {
 
     const offset = (page - 1) * limit;
 
-    // Sử dụng Follow model để query trực tiếp
+    // Tổng số following
+    const totalFollowing = await Follow.count({
+      where: { follower_id: userId },
+    });
+
+    // Lấy danh sách following
     const followingData = await Follow.findAndCountAll({
       where: {
         follower_id: userId,
@@ -120,12 +125,12 @@ const getFollowing = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
-    // Extract user data from the results
     const following = followingData.rows.map((follow) => follow.following);
 
     res.status(200).json({
       success: true,
       data: following,
+      totalFollowing, // <-- thêm tổng số following
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(followingData.count / limit),
@@ -142,8 +147,6 @@ const getFollowing = async (req, res) => {
   }
 };
 
-// ...existing code...
-
 // Lấy danh sách followers
 const getFollowers = async (req, res) => {
   try {
@@ -152,7 +155,12 @@ const getFollowers = async (req, res) => {
 
     const offset = (page - 1) * limit;
 
-    // Sử dụng Follow model để query trực tiếp
+    // Tổng số followers
+    const totalFollowers = await Follow.count({
+      where: { following_id: userId },
+    });
+
+    // Lấy danh sách followers
     const followersData = await Follow.findAndCountAll({
       where: {
         following_id: userId,
@@ -169,12 +177,12 @@ const getFollowers = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
-    // Extract user data from the results
     const followers = followersData.rows.map((follow) => follow.follower);
 
     res.status(200).json({
       success: true,
       data: followers,
+      totalFollowers, // <-- thêm tổng số followers
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(followersData.count / limit),

@@ -245,4 +245,21 @@ module.exports = {
       return errorResponse(res, 500, "Đã có lỗi xảy ra");
     }
   },
+
+  getProfileByUsername: async (req, res) => {
+    try {
+      const { username } = req.params;
+      const user = await User.findOne({
+        where: { username },
+        attributes: { exclude: ["password"] },
+      });
+      if (!user || user.is_blocked) {
+        return res.status(404).json({ message: "Không tìm thấy người dùng." });
+      }
+      return successResponse(res, 200, "Success", { user });
+    } catch (error) {
+      console.error("Get profile by username error:", error);
+      return res.status(500).json({ message: "Lỗi server." });
+    }
+  },
 };

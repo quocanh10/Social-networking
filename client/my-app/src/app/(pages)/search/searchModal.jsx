@@ -18,6 +18,7 @@ export default function SearchModal({ isOpen, onClose }) {
   const [recentSearches, setRecentSearches] = useState([]);
   const searchInputRef = useRef(null);
   const router = useRouter();
+  const [userKey, setUserKey] = useState("");
 
   // Focus vào input khi modal mở
   useEffect(() => {
@@ -26,17 +27,35 @@ export default function SearchModal({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  // Load recent searches từ localStorage
+  // Lấy userId khi mở modal
   useEffect(() => {
-    const saved = localStorage.getItem("recentSearches");
+    const fetchUserKey = async () => {
+      const { accessToken } = await getToken();
+      if (accessToken?.value) {
+        client.setToken(accessToken.value);
+        const res = await client.get("/profile");
+        if (res.data?.data?.user?.id) {
+          setUserKey(`recentSearches_${res.data.data.user.id}`);
+        }
+      }
+    };
+    if (isOpen) fetchUserKey();
+  }, [isOpen]);
+
+  // Load recent searches từ localStorage theo userKey
+  useEffect(() => {
+    if (!userKey) return;
+    const saved = localStorage.getItem(userKey);
     if (saved) {
       try {
         setRecentSearches(JSON.parse(saved));
       } catch {
         setRecentSearches([]);
       }
+    } else {
+      setRecentSearches([]);
     }
-  }, []);
+  }, [userKey]);
 
   // Debounce search
   useEffect(() => {
@@ -78,30 +97,33 @@ export default function SearchModal({ isOpen, onClose }) {
     }
   };
 
+  // Khi lưu lịch sử
   const handleUserClick = (user) => {
-    // Lưu vào recent searches
     const updatedRecent = [
       user,
       ...recentSearches.filter((item) => item.id !== user.id),
-    ].slice(0, 10); // Giữ tối đa 10 item
-
+    ].slice(0, 10);
     setRecentSearches(updatedRecent);
-    localStorage.setItem("recentSearches", JSON.stringify(updatedRecent));
-
-    // Chuyển đến trang profile
+    if (userKey) {
+      localStorage.setItem(userKey, JSON.stringify(updatedRecent));
+    }
     router.push(`/main/profile/${user.username}`);
     onClose();
   };
 
   const clearRecentSearches = () => {
     setRecentSearches([]);
-    localStorage.removeItem("recentSearches");
+    if (userKey) {
+      localStorage.removeItem(userKey);
+    }
   };
 
   const removeRecentSearch = (userId) => {
     const updated = recentSearches.filter((item) => item.id !== userId);
     setRecentSearches(updated);
-    localStorage.setItem("recentSearches", JSON.stringify(updated));
+    if (userKey) {
+      localStorage.setItem(userKey, JSON.stringify(updated));
+    }
   };
 
   if (!isOpen) return null;

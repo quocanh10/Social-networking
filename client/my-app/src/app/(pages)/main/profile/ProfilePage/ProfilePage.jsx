@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { getToken } from "../../../../actions/gettoken.action";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileTabs from "./components/ProfileTabs";
@@ -12,10 +13,14 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [postsCount, setPostsCount] = useState(0);
+
+  const { username } = useParams(); // lấy [username] từ URL, ví dụ /main/profile/johndoe
+  const [isOwn, setIsOwn] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
-  }, []);
+  }, [username]);
 
   const fetchProfileData = async () => {
     setLoading(true);
@@ -23,23 +28,64 @@ export default function ProfilePage() {
     try {
       const { accessToken } = await getToken();
 
-      if (!{ accessToken }) {
+      if (!accessToken.value) {
         setError("Không tìm thấy token. Vui lòng đăng nhập lại.");
         return;
       }
 
       client.setToken(accessToken.value);
-      const Res = await client.get("/profile");
-      console.log("Response from profile API:", Res);
 
-      const data = Res.data;
-      console.log("Profile data:", data);
+      // 1) Lấy user hiện tại để biết có phải xem trang của mình không
+      const meRes = await client.get("/profile");
+      const meOk = meRes?.data?.message === "Success";
+      const meUser = meOk ? meRes.data.data.user : null;
 
-      if (Res.response.ok && data.message == "Success") {
-        setProfileData(data.data.user);
-      } else {
-        setError(data.message || "Không thể tải thông tin profile");
+      // 2) Nếu không có username trên URL -> trang của mình
+      if (!username) {
+        if (!meUser) {
+          setError("Không thể tải thông tin tài khoản của bạn.");
+          return;
+        }
+        setIsOwn(true);
+        setProfileData(meUser);
+        // Lấy tổng bài viết của mình
+        const postsRes = await client.get(`/posts/user/${meUser.id}`);
+        setPostsCount(postsRes.data.data.pagination?.total_posts || 0);
+
+        return;
       }
+
+      // 3) Có username trên URL
+      // - Nếu username === me.username -> vẫn là trang của mình
+      if (meUser && meUser.username === username) {
+        setIsOwn(true);
+        setProfileData(meUser);
+        console.log("64 current Profile:", meUser);
+        // Lấy tổng bài viết của mình
+        const postsRes = await client.get(`/posts/user/${meUser.id}`);
+        setPostsCount(postsRes.data.data.pagination?.total_posts || 0);
+        return;
+      }
+
+      // - Ngược lại, gọi API lấy profile public theo username
+      //   Đổi endpoint này theo backend của anh: ví dụ "/users/{username}" hoặc "/users/profile?username="
+      const targetRes = await client.get(
+        `/profile/${encodeURIComponent(username)}`
+      );
+      const ok = targetRes?.data?.message === "Success";
+
+      if (!ok || !targetRes.data?.data?.user) {
+        setError("Không tìm thấy người dùng.");
+        return;
+      }
+
+      setIsOwn(false);
+      setProfileData(targetRes.data.data.user);
+      // Lấy tổng bài viết của mình
+      const postsRes = await client.get(
+        `/posts/user/${targetRes.data.data.user.id}`
+      );
+      setPostsCount(postsRes.data.data.pagination?.total_posts || 0);
     } catch (error) {
       console.error("Error fetching profile:", error);
       setError("Lỗi kết nối. Vui lòng thử lại.");
@@ -78,7 +124,11 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header với avatar, username, follow button */}
-      <ProfileHeader profileData={profileData} />
+      <ProfileHeader
+        profileData={profileData}
+        isOwn={isOwn}
+        postsCount={postsCount}
+      />
 
       {/* Stats: Posts, Followers, Following */}
       {/* <ProfileStats profileData={profileData} /> */}
@@ -87,7 +137,7 @@ export default function ProfilePage() {
       <ProfileTabs />
 
       {/* Grid posts */}
-      <PostGrid />
+      <PostGrid profileData={profileData} />
     </div>
   );
 }

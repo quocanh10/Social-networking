@@ -11,39 +11,22 @@ import FavoriteOutlinedIcon from "@mui/icons-material/FavoriteOutlined";
 import SentimentSatisfiedOutlinedIcon from "@mui/icons-material/SentimentSatisfiedOutlined";
 import BookmarkBorderOutlinedIcon from "@mui/icons-material/BookmarkBorderOutlined";
 import BookmarkOutlinedIcon from "@mui/icons-material/BookmarkOutlined";
-export default function PostGrid() {
+export default function PostGrid({ profileData }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState(null); // Lưu trữ bài viết được chọn để hiển thị trong modal
   const [userId, setUserId] = useState(null); // Lưu trữ userId
 
   useEffect(() => {
-    fetchUserId(); // Lấy userId từ API getProfile
-  }, []);
-
-  // Fetch thông tin người dùng (userId) từ API getProfile
-  const fetchUserId = async () => {
-    try {
-      const { accessToken } = await getToken();
-      if (!accessToken) {
-        alert("Không tìm thấy token. Vui lòng đăng nhập lại.");
-        return;
-      }
-
-      client.setToken(accessToken.value);
-      const res = await client.get("/profile"); // Gọi API lấy thông tin profile người dùng
-      const user = res.data.data.user;
-      setUserId(user.id); // Lưu userId vào state
-      fetchPosts(user.id); // Sau khi có userId, gọi API lấy bài viết
-    } catch (error) {
-      console.error("Error fetching userId:", error);
-      alert("Lỗi kết nối. Vui lòng thử lại.");
-    }
-  };
+    fetchPosts(profileData.id);
+  }, [profileData]);
 
   // Fetch danh sách bài viết của người dùng bằng userId động
   const fetchPosts = async (userId) => {
+    setLoading(true);
     try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
       const res = await client.get(`/posts/user/${userId}`);
       const data = res.data.data.posts;
       setPosts(data);

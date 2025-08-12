@@ -39,7 +39,6 @@ export default function NavBar() {
         if (accessToken?.value) {
           client.setToken(accessToken.value);
           const Response = await client.get("/profile"); // API lấy thông tin user
-          console.log("🚀 ~ fetchUserInfo ~ Response:", Response);
 
           if (Response.data.message === "Success") {
             setUser(Response.data.data.user); // Lưu thông tin user

@@ -1,20 +1,95 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Avatar, Button } from "@heroui/react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { getToken } from "@/app/actions/gettoken.action";
+import { client } from "@/app/helpers/fetch_api/client";
 
-export default function ProfileHeader({ profileData }) {
-  const router = useRouter();
+export default function ProfileHeader({ profileData, isOwn, postsCount }) {
+  // const router = useRouter();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [loadingFollow, setLoadingFollow] = useState(false);
+
+  useEffect(() => {
+    if (!isOwn && profileData?.id) {
+      checkFollowStatus();
+    }
+    if (profileData?.id) {
+      fetchFollowCounts();
+    }
+  }, [profileData, isOwn]);
+
+  // Kiểm tra trạng thái follow
+  const checkFollowStatus = async () => {
+    try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
+      const res = await client.get(`/follow/${profileData.id}/status`);
+      setIsFollowing(res.data.isFollowing);
+    } catch (err) {
+      setIsFollowing(false);
+    }
+  };
+
+  // Lấy số lượng followers/following
+  const fetchFollowCounts = async () => {
+    try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
+      const followersRes = await client.get(
+        `/follow/${profileData.id}/followers`
+      );
+      const followingRes = await client.get(
+        `/follow/${profileData.id}/following`
+      );
+      setFollowersCount(followersRes.data.totalFollowers);
+      setFollowingCount(followingRes.data.totalFollowing);
+    } catch (err) {
+      setFollowersCount(0);
+      setFollowingCount(0);
+    }
+  };
+
+  // Theo dõi
+  const handleFollow = async () => {
+    setLoadingFollow(true);
+    try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
+      await client.post(`/follow/${profileData.id}`);
+      setIsFollowing(true);
+      setFollowersCount((prev) => prev + 1);
+    } catch (err) {
+      // Xử lý lỗi nếu cần
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
+
+  // Bỏ theo dõi
+  const handleUnfollow = async () => {
+    setLoadingFollow(true);
+    try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
+      await client.delete(`/follow/${profileData.id}`);
+      setIsFollowing(false);
+      setFollowersCount((prev) => (prev > 0 ? prev - 1 : 0));
+    } catch (err) {
+      // Xử lý lỗi nếu cần
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
 
   if (!profileData) {
     return <div>Loading profile header...</div>;
   }
-
-  const handleEditProfile = () => {
-    router.push("/main/profile/edit");
-  };
 
   return (
     <div className="flex items-center gap-6 mb-5">
@@ -38,14 +113,36 @@ export default function ProfileHeader({ profileData }) {
         <div className="flex-1">
           <div className="flex items-center gap-4 mb-2">
             <h1 className="text-xl font-light">{profileData.username}</h1>
-            <Button
-              size="sm"
-              variant="ghost"
-              as={Link}
-              href="/main/profile/edit"
-            >
-              Chỉnh sửa trang cá nhân
-            </Button>
+            {isOwn ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                as={Link}
+                href="/main/profile/edit"
+              >
+                Chỉnh sửa trang cá nhân
+              </Button>
+            ) : isFollowing ? (
+              <Button
+                size="sm"
+                variant="outline"
+                color="primary"
+                disabled={loadingFollow}
+                onClick={handleUnfollow}
+              >
+                Đang theo dõi
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="solid"
+                color="primary"
+                disabled={loadingFollow}
+                onClick={handleFollow}
+              >
+                Theo dõi
+              </Button>
+            )}
             <Button variant="ghost" size="sm" className="px-6">
               Xem kho lưu trữ
             </Button>
@@ -56,13 +153,13 @@ export default function ProfileHeader({ profileData }) {
         {/* Stats */}
         <div className="flex gap-8">
           <span>
-            <strong>0</strong> bài viết
+            <strong>{postsCount}</strong> bài viết
           </span>
           <span>
-            <strong>0</strong> người theo dõi
+            <strong>{followersCount}</strong> người theo dõi
           </span>
           <span>
-            <strong>0</strong> đang theo dõi
+            <strong>{followingCount}</strong> đang theo dõi
           </span>
         </div>
 

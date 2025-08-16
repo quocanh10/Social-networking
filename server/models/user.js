@@ -40,6 +40,20 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: "follower_id",
         as: "followers",
       });
+
+      // Chat: User tham gia nhiều Thread (hội thoại)
+      User.belongsToMany(models.Thread, {
+        through: models.ThreadParticipant,
+        foreignKey: "user_id",
+        otherKey: "thread_id",
+        as: "threads",
+      });
+
+      // Chat: User gửi nhiều Message
+      User.hasMany(models.Message, {
+        foreignKey: "sender_id",
+        as: "messages",
+      });
     }
   }
   User.init(

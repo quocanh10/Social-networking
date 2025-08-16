@@ -1,4 +1,4 @@
-import { Avatar } from "@heroui/react";
+import { Avatar } from "@nextui-org/react";
 import Link from "next/link";
 
 export default function Article() {

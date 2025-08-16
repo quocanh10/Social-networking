@@ -9,7 +9,7 @@ import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
 import OndemandVideoOutlinedIcon from "@mui/icons-material/OndemandVideoOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
-import { Avatar } from "@heroui/react";
+import { Avatar } from "@nextui-org/react";
 import { useState, useRef, useEffect } from "react";
 import { Box } from "@mui/material";
 import CreatePost from "@/app/controllers/createpost/CreatePost";
@@ -39,9 +39,10 @@ export default function NavBar() {
         if (accessToken?.value) {
           client.setToken(accessToken.value);
           const Response = await client.get("/profile"); // API lấy thông tin user
-
+          console.log("🚀 ~ fetchUserInfo ~ Response:", Response);
           if (Response.data.message === "Success") {
             setUser(Response.data.data.user); // Lưu thông tin user
+            console.log("done", Response.data.data.user);
           }
         }
       } catch (error) {
@@ -162,8 +163,8 @@ export default function NavBar() {
             <OndemandVideoOutlinedIcon fontSize="large" color="inherit" />
             <span className="text-md">Reels</span>
           </Link>
-          <div
-            href="/"
+          <Link
+            href="/chat"
             className="flex gap-2 items-center p-2 rounded hover:bg-gray-300"
           >
             <svg
@@ -189,7 +190,7 @@ export default function NavBar() {
               ></path>
             </svg>
             <span className="text-md">Tin nhắn</span>
-          </div>
+          </Link>
           <Link
             href="/"
             className="flex gap-2 items-center p-2 rounded hover:bg-gray-300"
@@ -212,6 +213,12 @@ export default function NavBar() {
               size="sm"
               src={user?.avatar_url}
               className="flex-shrink-0"
+              classNames={{
+                img: "!opacity-100 !transition-none", // ép hiện ngay, bỏ fade
+                base: "!opacity-100", // phòng trường hợp lớp base cũng set opacity
+                fallback: "!opacity-100", // khi rơi vào fallback cũng không mờ
+              }}
+              disableAnimation
             />
             <span className="text-md">Trang cá nhân</span>
           </Link>

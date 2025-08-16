@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/react";
+import { Button } from "@nextui-org/react";
 import { CldUploadWidget } from "next-cloudinary";
 import { useState } from "react";
 

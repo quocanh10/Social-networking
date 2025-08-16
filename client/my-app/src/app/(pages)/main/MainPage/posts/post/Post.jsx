@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Container, TextField } from "@mui/material";
-import { Avatar, Tooltip } from "@heroui/react";
+import { Avatar, Tooltip } from "@nextui-org/react";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import Image from "next/image";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
@@ -11,7 +11,7 @@ import BookmarkOutlinedIcon from "@mui/icons-material/BookmarkOutlined";
 import SentimentSatisfiedOutlinedIcon from "@mui/icons-material/SentimentSatisfiedOutlined";
 import SendIcon from "@mui/icons-material/Send";
 import dynamic from "next/dynamic";
-import { Button } from "@heroui/react";
+import { Button } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { showToast } from "@/app/helpers/Toastify";
 import { client } from "@/app/helpers/fetch_api/client";

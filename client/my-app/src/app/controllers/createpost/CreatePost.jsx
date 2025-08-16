@@ -12,10 +12,10 @@ import Loading from "@/app/components/Loading/Loading";
 import { CldVideoPlayer } from "next-cloudinary";
 import "next-cloudinary/dist/cld-video-player.css";
 import CropIcon from "@mui/icons-material/Crop";
-import { Tooltip } from "@heroui/react";
+import { Tooltip } from "@nextui-org/react";
 import ImageCropper from "@/app/controllers/ImageCropper";
 import { TextField, Button } from "@mui/material";
-import { Avatar } from "@heroui/react";
+import { Avatar } from "@nextui-org/react";
 import React, { useEffect } from "react";
 
 export default function CreatePost({ setCreate }) {

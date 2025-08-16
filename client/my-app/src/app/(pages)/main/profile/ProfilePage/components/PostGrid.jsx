@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Modal, Box, Typography, Button, Backdrop, Fade } from "@mui/material";
-import { Spinner } from "@heroui/react";
-import { Avatar } from "@heroui/react";
+import { Spinner } from "@nextui-org/react"; // Thay thế Spinner bằng component từ NextUI
+import { Avatar } from "@nextui-org/react"; // Sử dụng Avatar từ NextUI
 import { client } from "@/app/helpers/fetch_api/client"; // Đảm bảo client fetch API đã được định nghĩa trước
 import { getToken } from "../../../../../actions/gettoken.action"; // Lấy token từ API
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";

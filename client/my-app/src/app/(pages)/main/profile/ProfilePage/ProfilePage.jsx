@@ -6,7 +6,7 @@ import { getToken } from "../../../../actions/gettoken.action";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileTabs from "./components/ProfileTabs";
 import PostGrid from "./components/PostGrid";
-import { Spinner } from "@heroui/react";
+import { Spinner } from "@nextui-org/react"; // Thay thế Spinner bằng component từ NextUI
 import { client } from "@/app/helpers/fetch_api/client";
 
 export default function ProfilePage() {

@@ -2,7 +2,7 @@
 
 import { Box, TextField } from "@mui/material";
 import Image from "next/image";
-import { Avatar, Button } from "@heroui/react";
+import { Avatar, Button } from "@nextui-org/react";
 import { useState, useEffect } from "react";
 import { client } from "@/app/helpers/fetch_api/client";
 import { getToken } from "../../../../../actions/gettoken.action";

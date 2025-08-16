@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Avatar, Button, Input, Textarea } from "@heroui/react";
+import { Avatar, Button, Input, Textarea } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { getToken } from "../../../../../actions/gettoken.action";
 

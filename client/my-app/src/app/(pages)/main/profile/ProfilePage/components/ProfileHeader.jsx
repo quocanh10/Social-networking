@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Avatar, Button } from "@heroui/react";
+import { Avatar, Button } from "@nextui-org/react";
 // import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -125,8 +125,8 @@ export default function ProfileHeader({ profileData, isOwn, postsCount }) {
             ) : isFollowing ? (
               <Button
                 size="sm"
-                variant="outline"
-                color="primary"
+                variant="bordered"
+                className="border border-gray-300 text-black font-medium hover:bg-gray-50"
                 disabled={loadingFollow}
                 onClick={handleUnfollow}
               >
@@ -143,9 +143,21 @@ export default function ProfileHeader({ profileData, isOwn, postsCount }) {
                 Theo dõi
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="px-6">
-              Xem kho lưu trữ
-            </Button>
+            {isOwn ? (
+              <Button variant="ghost" size="sm" className="px-6">
+                Xem kho lưu trữ
+              </Button>
+            ) : (
+              <Button
+                variant="solid"
+                size="sm"
+                className="px-6"
+                as={Link}
+                href={`/chat?user=${profileData.id}`}
+              >
+                Nhắn tin
+              </Button>
+            )}
             <SettingsIcon className="cursor-pointer" />
           </div>
         </div>

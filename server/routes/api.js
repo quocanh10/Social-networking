@@ -14,6 +14,7 @@ const followController = require("../controllers/api/v1/follow.controller");
 const upload = Multer({
   storage,
 });
+const chatController = require("../controllers/api/v1/chat.controller");
 
 var router = express.Router();
 
@@ -123,5 +124,15 @@ router.delete(
   authMiddleware,
   commentController.deleteComment
 );
+
+// Chat
+router.get("/chat/threads", authMiddleware, chatController.getThreads);
+router.get(
+  "/chat/messages/:threadId",
+  authMiddleware,
+  chatController.getMessages
+);
+router.post("/chat/send", authMiddleware, chatController.sendMessage);
+router.post("/chat/create", authMiddleware, chatController.createThread);
 
 module.exports = router;

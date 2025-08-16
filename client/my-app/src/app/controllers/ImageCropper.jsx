@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
-import { Button } from "@heroui/react";
+import { Button } from "@nextui-org/react";
 
 const INPUT_RATIO = [
   {

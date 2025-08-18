@@ -77,6 +77,12 @@ export default function ChatBox({ chat }) {
         peerId ||
         chat.ThreadParticipants.find((tp) => tp.user_id !== userId)?.user_id,
     });
+    const { accessToken } = await getToken();
+    client.setToken(accessToken.value);
+    await client.post("/chat/send", {
+      threadId,
+      content: input,
+    });
     setInput("");
   };
 

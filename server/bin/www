@@ -25,20 +25,48 @@ var server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [process.env.WEB_ORIGIN || "http://localhost:3000"],
+    credentials: true,
     methods: ["GET", "POST"],
   },
+  pingTimeout: 30000,
 });
+
+// Lưu userId <-> socketId
+const userSockets = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  // Nhận userId từ client sau khi đăng nhập
+  socket.on("register", (userId) => {
+    userSockets[userId] = socket.id;
+    socket.userId = userId;
+    // Join phòng riêng
+    socket.join(`user:${userId}`);
+  });
+
+  // Nhận tin nhắn 1:1 từ client
   socket.on("send_message", (data) => {
-    io.emit("receive_message", data);
+    // data: { threadId, content, toUserId, ... }
+    const toUserId = data.toUserId;
+    if (!toUserId) return;
+
+    // Log chi tiết nội dung tin nhắn
+    console.log(
+      `User ${socket.userId} gửi: "${data.content}" cho User ${toUserId}`
+    );
+    // Gửi cho người nhận
+    io.to(`user:${toUserId}`).emit("receive_message", data);
+    // Gửi lại cho chính mình để cập nhật UI
+    io.to(`user:${socket.userId}`).emit("receive_message", data);
   });
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    if (socket.userId) {
+      delete userSockets[socket.userId];
+    }
   });
 });
 

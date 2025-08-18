@@ -39,10 +39,8 @@ export default function NavBar() {
         if (accessToken?.value) {
           client.setToken(accessToken.value);
           const Response = await client.get("/profile"); // API lấy thông tin user
-          console.log("🚀 ~ fetchUserInfo ~ Response:", Response);
           if (Response.data.message === "Success") {
             setUser(Response.data.data.user); // Lưu thông tin user
-            console.log("done", Response.data.data.user);
           }
         }
       } catch (error) {
@@ -164,7 +162,7 @@ export default function NavBar() {
             <span className="text-md">Reels</span>
           </Link>
           <Link
-            href="/chat"
+            href={`/chat`}
             className="flex gap-2 items-center p-2 rounded hover:bg-gray-300"
           >
             <svg

@@ -1,39 +1,82 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { getToken } from "@/app/actions/gettoken.action";
+import { client } from "@/app/helpers/fetch_api/client";
+import { Avatar } from "@nextui-org/react";
 
-// Danh sách cuộc trò chuyện mẫu
-const sampleChats = [
-  { id: 1, name: "Alice", lastMessage: "Hi there!" },
-  { id: 2, name: "Bob", lastMessage: "How are you?" },
-  { id: 3, name: "Charlie", lastMessage: "Let's meet up." },
-];
+export default function Sidebar({ onSelectChat, selectedChat }) {
+  const [threads, setThreads] = useState([]);
+  const [userId, setUserId] = useState(null);
 
-const Sidebar = ({ onSelectChat }) => {
-  const [selectedChat, setSelectedChat] = useState(null);
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const { accessToken } = await getToken();
+        client.setToken(accessToken.value);
+        const res = await client.get("/profile");
+        console.log("15 User ID:", res.data.data.user.id);
+        setUserId(res.data.data.user.id);
+      } catch (err) {
+        console.error("Error fetching user ID:", err);
+      }
+    };
 
-  const handleSelect = (chat) => {
-    setSelectedChat(chat.id);
-    if (onSelectChat) onSelectChat(chat);
+    fetchUserId();
+  }, []);
+
+  useEffect(() => {
+    const fetchThreads = async () => {
+      try {
+        const { accessToken } = await getToken();
+        client.setToken(accessToken.value);
+        const res = await client.get("/chat/threads");
+        console.log("19 Fetched threads:", res.data.data.threads);
+        setThreads(res.data.data.threads || []);
+      } catch (err) {
+        setThreads([]);
+      }
+    };
+    fetchThreads();
+  }, []);
+
+  // Hàm lấy tên các thành viên khác mình
+  const getOtherUsers = (thread) => {
+    if (!thread.ThreadParticipants) return [];
+    return thread.ThreadParticipants.filter((tp) => tp.user_id !== userId).map(
+      (tp) => tp.user
+    );
   };
 
   return (
-    <aside className="w-64 h-full bg-gray-100 border-r flex flex-col">
-      <div className="p-4 font-bold text-lg border-b">Chats</div>
-      <ul className="flex-1 overflow-y-auto">
-        {sampleChats.map((chat) => (
-          <li
-            key={chat.id}
-            className={`p-4 cursor-pointer hover:bg-gray-200 transition ${
-              selectedChat === chat.id ? "bg-gray-300" : ""
-            }`}
-            onClick={() => handleSelect(chat)}
-          >
-            <div className="font-semibold">{chat.name}</div>
-            <div className="text-sm text-gray-500">{chat.lastMessage}</div>
-          </li>
-        ))}
+    <div className="p-4">
+      <h2 className="font-bold mb-4">Danh sách chat</h2>
+      <ul>
+        {threads.map((thread) => {
+          const others = getOtherUsers(thread);
+          const isSelected = selectedChat && thread.id === selectedChat.id;
+          return (
+            <li
+              key={thread.id}
+              className={`cursor-pointer py-2 border-b flex items-center gap-2 ${
+                isSelected ? "bg-blue-100" : ""
+              }`}
+              onClick={() => onSelectChat(thread)}
+            >
+              {others.map((user) => (
+                <Avatar
+                  key={user.id}
+                  src={user.avatar_url}
+                  name={user.username}
+                  size="sm"
+                  className="mr-1"
+                />
+              ))}
+              <span>
+                {others.map((user) => user.username).join(", ") || "Nhóm chat"}
+              </span>
+            </li>
+          );
+        })}
       </ul>
-    </aside>
+    </div>
   );
-};
-
-export default Sidebar;
+}

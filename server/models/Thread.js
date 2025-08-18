@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "thread_id",
         as: "messages",
       });
+      Thread.hasMany(models.ThreadParticipant, {
+        foreignKey: "thread_id",
+        as: "ThreadParticipants",
+      });
     }
   }
   Thread.init(

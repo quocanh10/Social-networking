@@ -3,7 +3,15 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class ThreadParticipant extends Model {
     static associate(models) {
-      // Không cần khai báo quan hệ ở đây, đã đủ ở các model khác
+      ThreadParticipant.belongsTo(models.Thread, {
+        foreignKey: "thread_id",
+        as: "thread",
+      });
+      // Liên kết với User
+      ThreadParticipant.belongsTo(models.User, {
+        foreignKey: "user_id",
+        as: "user",
+      });
     }
   }
   ThreadParticipant.init(

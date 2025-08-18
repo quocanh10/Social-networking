@@ -16,7 +16,7 @@ export default function ChatPage() {
       </div>
       {/* Sidebar ở giữa */}
       <div className="w-64 border-r">
-        <Sidebar onSelectChat={setSelectedChat} />
+        <Sidebar onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       </div>
       {/* ChatBox bên phải */}
       <div className="flex-1">

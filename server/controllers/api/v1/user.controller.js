@@ -262,4 +262,31 @@ module.exports = {
       return res.status(500).json({ message: "Lỗi server." });
     }
   },
+
+  getAllUsers: async (req, res) => {
+    try {
+      const users = await User.findAll({
+        where: {
+          is_blocked: false,
+          is_private: false,
+        },
+        attributes: [
+          "id",
+          "username",
+          "fullname",
+          "avatar_url",
+          "tick_blue",
+          "intro",
+        ],
+        order: [
+          ["tick_blue", "DESC"],
+          ["username", "ASC"],
+        ],
+      });
+      return successResponse(res, 200, "Danh sách user", { users });
+    } catch (error) {
+      console.error("Get all users error:", error);
+      return res.status(500).json({ message: "Lỗi server." });
+    }
+  },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import socket from "@/utils/socket";
 import { getToken } from "@/app/actions/gettoken.action";
@@ -8,11 +8,12 @@ import { Avatar } from "@nextui-org/react";
 export default function ChatBox({ chat }) {
   const params = useSearchParams();
   const peerId = params.get("user");
-
+  const messagesEndRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [userId, setUserId] = useState(null);
   const [threadId, setThreadId] = useState(null);
+  const [userAvatars, setUserAvatars] = useState({});
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -25,6 +26,12 @@ export default function ChatBox({ chat }) {
     };
     fetchUserId();
   }, []);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   useEffect(() => {
     const getThreadId = async () => {
@@ -48,7 +55,19 @@ export default function ChatBox({ chat }) {
       const { accessToken } = await getToken();
       client.setToken(accessToken.value);
       const res = await client.get(`/chat/messages/${threadId}`);
+      const msgs = res.data.data.messages || [];
       setMessages(res.data.data.messages || []);
+      // Lưu avatar theo userId
+      const userInfo = {};
+      msgs.forEach((msg) => {
+        if (msg.sender && msg.sender.id) {
+          userInfo[msg.sender.id] = {
+            avatar: msg.sender.avatar_url,
+            name: msg.sender.name || msg.sender.username,
+          };
+        }
+      });
+      setUserAvatars(userInfo);
     };
     fetchMessages();
   }, [threadId]);
@@ -97,12 +116,8 @@ export default function ChatBox({ chat }) {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto mb-4 px-4">
         {messages.map((msg, idx) => {
-          // Nếu có sender_id thì dùng, nếu không thì so sánh toUserId
-          const isMe =
-            (msg.sender && msg.sender.id === userId) ||
-            msg.sender_id === userId ||
-            (!msg.sender_id && !msg.sender && msg.toUserId !== userId);
-
+          const isMe = msg?.sender_id === userId;
+          console.log("Tin nhắn:", msg);
           return (
             <div
               key={msg.id || idx}
@@ -113,11 +128,26 @@ export default function ChatBox({ chat }) {
                   isMe ? "bg-blue-500 text-white" : "bg-gray-200 text-black"
                 }`}
               >
+                {/* Nếu không phải mình thì hiện tên hoặc id người gửi */}
+                {!isMe && (
+                  <div className="flex items-center mb-1">
+                    <Avatar
+                      src={userAvatars[msg?.sender_id]?.avatar}
+                      size="sm"
+                      className="mr-2"
+                    />
+                    <span className="text-xs font-semibold">
+                      {userAvatars[msg?.sender_id]?.name ||
+                        `User ${msg?.sender_id}`}
+                    </span>
+                  </div>
+                )}
                 <span>{msg.content}</span>
               </div>
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
       <div className="p-4 flex">
         <input

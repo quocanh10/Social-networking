@@ -15,6 +15,10 @@ module.exports = {
         defaultValue: false,
         allowNull: false,
       },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       last_message_at: {
         type: Sequelize.DATE,
         allowNull: true,

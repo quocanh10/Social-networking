@@ -42,6 +42,7 @@ router.get(
   authMiddleware,
   userController.getProfileByUsername
 );
+router.get("/users", authMiddleware, userController.getAllUsers);
 
 // Cloudinary
 // router.use("/cloudinary", cloudinaryRoutes);
@@ -134,5 +135,6 @@ router.get(
 );
 router.post("/chat/send", authMiddleware, chatController.sendMessage);
 router.post("/chat/create", authMiddleware, chatController.createThread);
+router.post("/chat/group", authMiddleware, chatController.createGroup);
 
 module.exports = router;

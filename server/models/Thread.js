@@ -32,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      name: {
+        // Thêm trường tên nhóm
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       last_message_at: {
         type: DataTypes.DATE,
       },

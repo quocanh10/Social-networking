@@ -46,20 +46,34 @@ io.on("connection", (socket) => {
     socket.join(`user:${userId}`);
   });
 
-  // Nhận tin nhắn 1:1 từ client
-  socket.on("send_message", (data) => {
-    // data: { threadId, content, toUserId, ... }
-    const toUserId = data.toUserId;
-    if (!toUserId) return;
+  const { ThreadParticipant } = require("../models");
 
-    // Log chi tiết nội dung tin nhắn
+  socket.on("send_message", async (data) => {
+    // data: { threadId, content }
+    const { threadId, content } = data;
+    if (!threadId || !content) return;
+
+    // Lấy tất cả thành viên của thread (nhóm hoặc 1-1)
+    const participants = await ThreadParticipant.findAll({
+      where: { thread_id: threadId },
+      attributes: ["user_id"],
+    });
+
+    // Log gửi tin nhắn nhóm
     console.log(
-      `User ${socket.userId} gửi: "${data.content}" cho User ${toUserId}`
+      `User ${socket.userId} gửi: "${content}" vào thread ${threadId} cho các user:`,
+      participants.map((tp) => tp.user_id)
     );
-    // Gửi cho người nhận
-    io.to(`user:${toUserId}`).emit("receive_message", data);
-    // Gửi lại cho chính mình để cập nhật UI
-    io.to(`user:${socket.userId}`).emit("receive_message", data);
+
+    // Emit cho tất cả thành viên
+    participants.forEach((tp) => {
+      io.to(`user:${tp.user_id}`).emit("receive_message", {
+        threadId,
+        content,
+        sender_id: socket.userId,
+        created_at: new Date().toISOString(),
+      });
+    });
   });
 
   socket.on("disconnect", () => {

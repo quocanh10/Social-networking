@@ -15,6 +15,23 @@ export default function ChatBox({ chat }) {
   const [threadId, setThreadId] = useState(null);
   const [userAvatars, setUserAvatars] = useState({});
 
+  console.log("18 ChatBox mounted with chat:", chat);
+
+  useEffect(() => {
+    if (!chat || !chat.ThreadParticipants) return;
+    const userInfo = {};
+    chat.ThreadParticipants.forEach((tp) => {
+      if (tp.user) {
+        userInfo[tp.id] = {
+          avatar: tp.user.avatar_url,
+          name: tp.user.username,
+        };
+        console.log("User info for thread participant:", userInfo[tp.id]);
+      }
+    });
+    setUserAvatars(userInfo);
+  }, [chat]);
+
   useEffect(() => {
     const fetchUserId = async () => {
       const { accessToken } = await getToken();
@@ -57,16 +74,28 @@ export default function ChatBox({ chat }) {
       const res = await client.get(`/chat/messages/${threadId}`);
       const msgs = res.data.data.messages || [];
       setMessages(res.data.data.messages || []);
-      // Lưu avatar theo userId
+      // Lấy danh sách userId gửi tin nhắn (ngoại trừ mình)
+      const ids = [
+        ...new Set(
+          msgs.map((msg) => msg.sender_id).filter((id) => id && id !== userId)
+        ),
+      ];
+
+      // Lấy thông tin cơ bản từng userId
       const userInfo = {};
-      msgs.forEach((msg) => {
-        if (msg.sender && msg.sender.id) {
-          userInfo[msg.sender.id] = {
-            avatar: msg.sender.avatar_url,
-            name: msg.sender.name || msg.sender.username,
-          };
-        }
-      });
+      await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const res = await client.get(`/users/${id}`);
+            userInfo[id] = {
+              avatar: res.data.data.user.avatar_url,
+              name: res.data.data.user.username,
+            };
+          } catch (err) {
+            userInfo[id] = { avatar: "", name: `User ${id}` };
+          }
+        })
+      );
       setUserAvatars(userInfo);
     };
     fetchMessages();
@@ -135,6 +164,12 @@ export default function ChatBox({ chat }) {
                       src={userAvatars[msg?.sender_id]?.avatar}
                       size="sm"
                       className="mr-2"
+                      classNames={{
+                        img: "!opacity-100 !transition-none", // ép hiện ngay, bỏ fade
+                        base: "!opacity-100", // phòng trường hợp lớp base cũng set opacity
+                        fallback: "!opacity-100", // khi rơi vào fallback cũng không mờ
+                      }}
+                      disableAnimation
                     />
                     <span className="text-xs font-semibold">
                       {userAvatars[msg?.sender_id]?.name ||

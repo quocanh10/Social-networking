@@ -43,7 +43,7 @@ router.get(
   userController.getProfileByUsername
 );
 router.get("/users", authMiddleware, userController.getAllUsers);
-
+router.get("/users/:id", authMiddleware, userController.getUserBasicInfo);
 // Cloudinary
 // router.use("/cloudinary", cloudinaryRoutes);
 router.delete(

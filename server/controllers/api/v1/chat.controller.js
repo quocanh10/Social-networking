@@ -44,6 +44,7 @@ module.exports = {
         attributes: [
           "id",
           "is_group",
+          "name",
           "last_message_at",
           "created_at",
           "updated_at",

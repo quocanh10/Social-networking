@@ -3,6 +3,7 @@ import { getToken } from "@/app/actions/gettoken.action";
 import { client } from "@/app/helpers/fetch_api/client";
 import { Avatar } from "@nextui-org/react";
 import { showToast } from "@/app/helpers/Toastify";
+import socket from "@/utils/socket";
 
 export default function Sidebar({ onSelectChat, selectedChat }) {
   const [threads, setThreads] = useState([]);
@@ -26,18 +27,31 @@ export default function Sidebar({ onSelectChat, selectedChat }) {
     fetchUserId();
   }, []);
 
+  const fetchThreads = async () => {
+    try {
+      const { accessToken } = await getToken();
+      client.setToken(accessToken.value);
+      const res = await client.get("/chat/threads");
+      // Sắp xếp theo updated_at mới nhất
+      const sorted = (res.data.data.threads || []).sort(
+        (a, b) =>
+          new Date(b.updated_at || b.last_message_at) -
+          new Date(a.updated_at || a.last_message_at)
+      );
+      setThreads(sorted);
+    } catch (err) {
+      setThreads([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        const { accessToken } = await getToken();
-        client.setToken(accessToken.value);
-        const res = await client.get("/chat/threads");
-        setThreads(res.data.data.threads || []);
-      } catch (err) {
-        setThreads([]);
-      }
-    };
     fetchThreads();
+    // Lắng nghe sự kiện tin nhắn mới
+    const handleReceive = () => fetchThreads();
+    socket.on("receive_message", handleReceive);
+    return () => {
+      socket.off("receive_message", handleReceive);
+    };
   }, []);
 
   // Lấy danh sách tất cả user để chọn thành viên nhóm
@@ -76,6 +90,7 @@ export default function Sidebar({ onSelectChat, selectedChat }) {
         participantIds: selectedMembers,
       });
       setThreads((prev) => [...prev, res.data.data.thread]);
+      await fetchThreads();
       setShowCreateGroup(false);
       setGroupName("");
       setSelectedMembers([]);

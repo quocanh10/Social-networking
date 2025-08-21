@@ -289,4 +289,19 @@ module.exports = {
       return res.status(500).json({ message: "Lỗi server." });
     }
   },
+  getUserBasicInfo: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await User.findByPk(id, {
+        attributes: ["id", "username", "avatar_url"],
+      });
+      if (!user || user.is_blocked) {
+        return res.status(404).json({ message: "Không tìm thấy người dùng." });
+      }
+      return successResponse(res, 200, "Thông tin cơ bản user", { user });
+    } catch (error) {
+      console.error("Get user basic info error:", error);
+      return res.status(500).json({ message: "Lỗi server." });
+    }
+  },
 };

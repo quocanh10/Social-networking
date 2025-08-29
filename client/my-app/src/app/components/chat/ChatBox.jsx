@@ -4,6 +4,10 @@ import socket from "@/utils/socket";
 import { getToken } from "@/app/actions/gettoken.action";
 import { client } from "@/app/helpers/fetch_api/client";
 import { Avatar } from "@nextui-org/react";
+import CallOutlinedIcon from "@mui/icons-material/CallOutlined";
+import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import VideoCall from "@/app/components/call/VideoCall";
 
 export default function ChatBox({ chat }) {
   const params = useSearchParams();
@@ -14,6 +18,7 @@ export default function ChatBox({ chat }) {
   const [userId, setUserId] = useState(null);
   const [threadId, setThreadId] = useState(null);
   const [userAvatars, setUserAvatars] = useState({});
+  const [showVideoCall, setShowVideoCall] = useState(false);
 
   console.log("18 ChatBox mounted with chat:", chat);
 
@@ -116,6 +121,31 @@ export default function ChatBox({ chat }) {
     };
   }, [threadId]);
 
+  useEffect(() => {
+    // Khi nhận được video_offer thì mở modal VideoCall
+    const handleVideoOffer = ({
+      threadId: incomingThreadId,
+      offer,
+      fromUserId,
+    }) => {
+      console.log("131 Setting up video call listeners");
+      // Nếu đang ở đúng thread và người gọi là đối phương
+      if (
+        incomingThreadId === threadId &&
+        fromUserId !== userId // không phải mình gọi
+      ) {
+        console.log(
+          `Nhận yêu cầu gọi video từ user ${fromUserId} vào thread ${incomingThreadId}`
+        );
+        setShowVideoCall(true);
+      }
+    };
+    socket.on("video_offer", handleVideoOffer);
+    return () => {
+      socket.off("video_offer", handleVideoOffer);
+    };
+  }, [threadId, userId]);
+
   const handleSend = async () => {
     if (!input.trim() || !threadId || !userId) return;
     socket.emit("send_message", {
@@ -143,6 +173,63 @@ export default function ChatBox({ chat }) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Thanh header phía trên */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b bg-white">
+        {chat?.is_group ? (
+          <Avatar
+            src={chat.avatar_url || ""}
+            name={chat.name}
+            size="md"
+            className="mr-2"
+          />
+        ) : (
+          <Avatar
+            src={
+              chat?.ThreadParticipants?.find((tp) => tp.user_id !== userId)
+                ?.user?.avatar_url || ""
+            }
+            name={
+              chat?.ThreadParticipants?.find((tp) => tp.user_id !== userId)
+                ?.user?.username || ""
+            }
+            size="md"
+            className="mr-2"
+            classNames={{
+              img: "!opacity-100 !transition-none", // ép hiện ngay, bỏ fade
+              base: "!opacity-100", // phòng trường hợp lớp base cũng set opacity
+              fallback: "!opacity-100", // khi rơi vào fallback cũng không mờ
+            }}
+            disableAnimation
+          />
+        )}
+        <div className="font-bold text-lg flex-1">
+          {chat?.is_group
+            ? chat.name
+            : chat?.ThreadParticipants?.find((tp) => tp.user_id !== userId)
+                ?.user?.username || ""}
+        </div>
+        <button
+          className="p-2 rounded mr-2 bg-transparent hover:bg-gray-100 flex items-center"
+          title="Gọi thoại"
+        >
+          <CallOutlinedIcon fontSize="medium" style={{ color: "#333" }} />
+        </button>
+        <button
+          className="p-2 rounded mr-2 bg-transparent hover:bg-gray-100 flex items-center"
+          title="Gọi video"
+          onClick={() => setShowVideoCall(true)}
+        >
+          <VideocamOutlinedIcon fontSize="medium" style={{ color: "#333" }} />
+        </button>
+        <button
+          className="p-2 rounded bg-transparent hover:bg-gray-100 flex items-center"
+          title="Thông tin nhóm"
+          onClick={() => alert("Thông tin nhóm")}
+        >
+          <InfoOutlinedIcon fontSize="medium" style={{ color: "#333" }} />
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto mb-4 px-4">
         {messages.map((msg, idx) => {
           const isMe = msg?.sender_id === userId;
@@ -199,6 +286,16 @@ export default function ChatBox({ chat }) {
           Gửi
         </button>
       </div>
+      {showVideoCall && (
+        <VideoCall
+          threadId={threadId}
+          peerId={
+            chat?.ThreadParticipants?.find((tp) => tp.user_id !== userId)
+              ?.user_id || peerId
+          }
+          onClose={() => setShowVideoCall(false)}
+        />
+      )}
     </div>
   );
 }

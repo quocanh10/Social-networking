@@ -76,6 +76,73 @@ io.on("connection", (socket) => {
     });
   });
 
+  // Xử lý signaling cho video call
+  socket.on("video_offer", async ({ threadId, offer }) => {
+    const { ThreadParticipant } = require("../models");
+    const participants = await ThreadParticipant.findAll({
+      where: { thread_id: threadId },
+      attributes: ["user_id"],
+    });
+
+    participants.forEach((tp) => {
+      if (tp.user_id !== socket.userId) {
+        io.to(`user:${tp.user_id}`).emit("video_offer", {
+          threadId,
+          offer,
+          fromUserId: socket.userId,
+        });
+      }
+    });
+    console.log(
+      `video_offer from ${socket.userId} gửi tới thread ${threadId} cho các user:`,
+      participants.map((tp) => tp.user_id)
+    );
+  });
+
+  socket.on("video_answer", async ({ threadId, answer }) => {
+    const { ThreadParticipant } = require("../models");
+    const participants = await ThreadParticipant.findAll({
+      where: { thread_id: threadId },
+      attributes: ["user_id"],
+    });
+
+    participants.forEach((tp) => {
+      if (tp.user_id !== socket.userId) {
+        io.to(`user:${tp.user_id}`).emit("video_answer", {
+          threadId,
+          answer,
+          fromUserId: socket.userId,
+        });
+      }
+    });
+    console.log(
+      `video_answer from ${socket.userId} gửi tới thread ${threadId} cho các user:`,
+      participants.map((tp) => tp.user_id)
+    );
+  });
+
+  socket.on("video_ice_candidate", async ({ threadId, candidate }) => {
+    const { ThreadParticipant } = require("../models");
+    const participants = await ThreadParticipant.findAll({
+      where: { thread_id: threadId },
+      attributes: ["user_id"],
+    });
+
+    participants.forEach((tp) => {
+      if (tp.user_id !== socket.userId) {
+        io.to(`user:${tp.user_id}`).emit("video_ice_candidate", {
+          threadId,
+          candidate,
+          fromUserId: socket.userId,
+        });
+      }
+    });
+    console.log(
+      `video_ice_candidate from ${socket.userId} gửi tới thread ${threadId} cho các user:`,
+      participants.map((tp) => tp.user_id)
+    );
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
     if (socket.userId) {

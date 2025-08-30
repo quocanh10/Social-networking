@@ -60,9 +60,19 @@ export default function VideoCall({ threadId, peerId, onClose }) {
 
     // Nhận answer từ đối phương
     socket.on("video_answer", ({ answer }) => {
-      peerConnection.current.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
+      if (
+        peerConnection.current &&
+        peerConnection.current.signalingState === "have-local-offer"
+      ) {
+        peerConnection.current.setRemoteDescription(
+          new RTCSessionDescription(answer)
+        );
+      } else {
+        console.warn(
+          "Không thể setRemoteDescription(answer) khi signalingState là:",
+          peerConnection.current?.signalingState
+        );
+      }
     });
 
     // Nhận ICE candidate từ đối phương
@@ -110,6 +120,20 @@ export default function VideoCall({ threadId, peerId, onClose }) {
       socket.off("video_ice_candidate");
       socket.off("video_offer");
       peerConnection.current?.close();
+      peerConnection.current = null;
+      // Giải phóng camera và mic
+      if (localVideoRef.current && localVideoRef.current.srcObject) {
+        localVideoRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
+        localVideoRef.current.srcObject = null;
+      }
+      if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+        remoteVideoRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
+        remoteVideoRef.current.srcObject = null;
+      }
     };
   }, [threadId, peerId]);
 
